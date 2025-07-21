@@ -8,15 +8,24 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3001;
 
+app.use(express.static(path.join(__dirname, 'frontend/build')));
+
 const FASTAPI_SERVICE_URL = process.env.FASTAPI_SERVICE_URL;
 
 if (!FASTAPI_SERVICE_URL) {
-    console.error("Error: FASTAPI_SERVICE_URL environment variable is not set. Please check your .env.nodejs file.");
+    console.error("오류: FASTAPI_SERVICE_URL 환경 변수가 설정되지 않았습니다. .env.nodejs 파일을 확인해주세요.");
     process.exit(1);
 }
 
 app.use(cors({
-    origin: '*',
+    origin: [
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'http://localhost:3002',
+        'http://15.168.150.125:3000',
+        'http://15.168.150.125:3001',
+        'http://15.168.150.125:3002',
+    ],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
@@ -26,22 +35,20 @@ app.use(express.json());
 app.post('/recommend-plants', async (req, res) => {
     try {
         const fastapiResponse = await axios.post(`${FASTAPI_SERVICE_URL}/recommend/`, req.body);
-
         res.status(fastapiResponse.status).json(fastapiResponse.data);
-
     } catch (error) {
-        console.error("Error calling FastAPI service:", error.message);
+        console.error("FastAPI 서비스 호출 중 오류 발생:", error.message);
         if (error.response) {
-            console.error("FastAPI service full error response:", error.response.data);
+            console.error("FastAPI 서비스 전체 오류 응답:", error.response.data);
             res.status(error.response.status).json(error.response.data);
         } else {
-            res.status(500).json({ message: "Failed to connect to plant recommendation service.", error: error.message });
+            res.status(500).json({ message: "식물 추천 서비스에 연결하지 못했습니다.", error: error.message });
         }
     }
 });
 
 app.listen(port, () => {
-    console.log(`Node.js API Gateway listening at http://localhost:${port}`);
-    console.log(`Clients should call: http://localhost:${port}/recommend-plants`);
-    console.log(`Internal FastAPI service at: ${FASTAPI_SERVICE_URL}`);
+    console.log(`Node.js API Gateway가 http://localhost:${port} 에서 실행 중입니다.`);
+    console.log(`클라이언트는 http://15.168.150.125:${port}/recommend-plants 로 요청해야 합니다.`);
+    console.log(`내부 FastAPI 서비스는 ${FASTAPI_SERVICE_URL} 에 있습니다.`);
 });

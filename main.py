@@ -10,13 +10,15 @@ from fastapi.middleware.cors import CORSMiddleware
 load_dotenv()
 
 app = FastAPI(
-    title="식물 추천 서비스 (FastAPI 백엔드)",
-    description="사용자의 환경 정보를 받아 OpenAI로 식물을 추천하는 핵심 로직."
+    title="식물 추천 서비스",
+    description="사용자의 환경 정보를 받아 OpenAI로 식물을 추천하는 기능"
 )
 
 origins = [
-    "http://localhost",
-    "http://localhost:3001", # Node.js 서버가 실행될 포트
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://15.168.150.125:3000",
+    "http://15.168.150.125:3001",
 ]
 
 app.add_middleware(
@@ -96,7 +98,7 @@ def get_env_description(
 
 
 @app.post("/recommend/", response_model=PlantRecommendationResponse)
-async def recommend_plants_openai(env_input: EnvironmentInput):
+async def recommend_plants(env_input: EnvironmentInput):
     env_description = get_env_description(
         env_input.has_south_sun,
         env_input.has_north_sun,
