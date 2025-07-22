@@ -49,6 +49,4 @@ app.post('/recommend-plants', async (req, res) => {
 
 app.listen(port, () => {
     console.log(`Node.js API Gateway가 http://localhost:${port} 에서 실행 중입니다.`);
-    console.log(`클라이언트는 http://15.168.150.125:${port}/recommend-plants 로 요청해야 합니다.`);
-    console.log(`내부 FastAPI 서비스는 ${FASTAPI_SERVICE_URL} 에 있습니다.`);
 });
