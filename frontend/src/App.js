@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { BrowserRouter } from 'react-router-dom';
+import Header from './Header';
 import './App.css';
 
 function App() {
@@ -61,95 +63,98 @@ function App() {
     };
 
     return (
-        <div className="App" style={{ fontFamily: 'Arial, sans-serif', maxWidth: '800px', margin: '20px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <header style={{ textAlign: 'center', marginBottom: '30px' }}>
-                <h1 style={{ color: '#333' }}>식물 추천 받기</h1>
-                <p style={{ color: '#666' }}>당신의 환경에 딱 맞는 식물을 찾아보세요!</p>
-            </header>
+        <BrowserRouter>
+            <div className="App" style={{ fontFamily: 'Arial, sans-serif', backgroundColor: '#d8e3e2', minHeight: '100vh', paddingTop: '30px' }}>
+                <Header />
 
-            <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '15px', padding: '20px', border: '1px solid #eee', borderRadius: '5px', backgroundColor: '#f9f9f9' }}>
-                <h2 style={{ color: '#555', borderBottom: '1px solid #ddd', paddingBottom: '10px', marginBottom: '20px' }}>환경 정보 입력</h2>
+                <div style={{ maxWidth: '1000px', margin: '100px auto 20px', padding: '20px', border: '1px solid #ccc', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', backgroundColor: '#ffffff' }}>
+                    <header style={{ textAlign: 'center', marginBottom: '30px' }}>
+                        <h2 style={{ color: '#333' }}>식물 추천 받기</h2>
+                        <h3 style={{ color: '#666' }}>당신의 환경에 딱 맞는 식물을 찾아보세요!</h3>
+                    </header>
 
-                <div>
-                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', textAlign: 'center' }}>햇빛 방향:</label>
-                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                        <label><input type="checkbox" name="has_south_sun" checked={formData.has_south_sun} onChange={handleChange} /> 남향</label>
-                        <label><input type="checkbox" name="has_north_sun" checked={formData.has_north_sun} onChange={handleChange} /> 북향</label>
-                        <label><input type="checkbox" name="has_east_sun" checked={formData.has_east_sun} onChange={handleChange} /> 동향</label>
-                        <label><input type="checkbox" name="has_west_sun" checked={formData.has_west_sun} onChange={handleChange} /> 서향</label>
-                    </div>
+                    <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '15px', padding: '20px', border: '1px solid #eee', borderRadius: '5px', backgroundColor: '#f9f9f9' }}>
+                        <h2 style={{ color: '#555', borderBottom: '1px solid #ddd', paddingBottom: '10px', marginBottom: '20px', textAlign: 'center' }}>환경 정보 입력</h2>
+
+                        <div style={{ textAlign: 'center' }}>
+                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>햇빛 방향:</label>
+                            <div style={{ display: 'inline-flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                                <label><input type="checkbox" name="has_south_sun" checked={formData.has_south_sun} onChange={handleChange} /> 남향</label>
+                                <label><input type="checkbox" name="has_north_sun" checked={formData.has_north_sun} onChange={handleChange} /> 북향</label>
+                                <label><input type="checkbox" name="has_east_sun" checked={formData.has_east_sun} onChange={handleChange} /> 동향</label>
+                                <label><input type="checkbox" name="has_west_sun" checked={formData.has_west_sun} onChange={handleChange} /> 서향</label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label htmlFor="plant_location" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>식물 놓을 위치:</label>
+                            <select id="plant_location" name="plant_location" value={formData.plant_location} onChange={handleChange} style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}>
+                                <option value="Indoor">창가에서 1m 이상 떨어진 실내</option>
+                                <option value="Window">창가 바로 옆 (직사광선 가능)</option>
+                                <option value="Balcony">베란다/발코니 (야외 유사 환경)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>블라인드/커튼 유무:</label>
+                            <label><input type="checkbox" name="has_blinds_curtains" checked={formData.has_blinds_curtains} onChange={handleChange} /> 있음</label>
+                        </div>
+
+                        <div>
+                            <label htmlFor="water_frequency" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>물주기 빈도 선호:</label>
+                            <select id="water_frequency" name="water_frequency" value={formData.water_frequency} onChange={handleChange} style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}>
+                                <option value={1}>물을 자주 주는 편 (흙 마르면 바로)</option>
+                                <option value={2}>흙 표면 마르면 (주 1~2회)</option>
+                                <option value={3}>흙 속까지 완전히 마르면 (주 1회 미만)</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" disabled={loading} style={{ padding: '10px 20px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '5px', cursor: loading ? 'not-allowed' : 'pointer', fontSize: '16px', fontWeight: 'bold' }}>
+                            {loading ? '추천 중...' : '식물 추천받기'}
+                        </button>
+                    </form>
+
+                    {error && (
+                        <div style={{ color: 'red', marginTop: '20px', padding: '10px', border: '1px solid red', borderRadius: '5px', backgroundColor: '#ffe6e6' }}>
+                            <p>오류: {error}</p>
+                        </div>
+                    )}
+
+                    {recommendations.length > 0 && (
+                        <div style={{ marginTop: '30px', padding: '20px', border: '1px solid #eee', borderRadius: '5px', backgroundColor: '#f9f9f9' }}>
+                            <h2 style={{ color: '#555', borderBottom: '1px solid #ddd', paddingBottom: '10px', marginBottom: '20px', textAlign: 'center' }}>추천 식물</h2>
+                            <ul style={{ listStyle: 'none', padding: 0 }}>
+                                {recommendations.map((plant, index) => (
+                                    <li key={index} style={{ marginBottom: '20px', padding: '10px', border: '1px solid #e0e0e0', borderRadius: '5px', backgroundColor: '#fff', display: 'flex', alignItems: 'flex-start', gap: '15px' }}>
+                                        <img
+                                            src={plant.image_url}
+                                            alt={plant.name}
+                                            style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0, border: '1px solid #ccc' }}
+                                            onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/128x128/E0E6EB/555555?text=No+Image"; }}
+                                        />
+                                        <div style={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            flex: 1
+                                        }}>
+                                            <h3 style={{ color: '#4CAF50', marginTop: 0, marginBottom: '5px', textAlign: 'center' }}>{plant.name}</h3>
+                                            <p style={{ color: '#777', fontSize: '0.95em', lineHeight: '1.5', textAlign: 'center' }}>{plant.description}</p>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    {!loading && !error && recommendations.length === 0 && (
+                        <div style={{ marginTop: '30px', padding: '20px', border: '1px solid #eee', borderRadius: '5px', backgroundColor: '#f9f9f9', textAlign: 'center', color: '#888' }}>
+                            <p>아직 추천된 식물이 없습니다. 환경 정보를 입력하고 '식물 추천받기' 버튼을 눌러보세요!</p>
+                        </div>
+                    )}
                 </div>
-
-                <div>
-                    <label htmlFor="plant_location" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>식물 놓을 위치:</label>
-                    <select id="plant_location" name="plant_location" value={formData.plant_location} onChange={handleChange} style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}>
-                        <option value="Indoor">창가에서 1m 이상 떨어진 실내</option>
-                        <option value="Window">창가 바로 옆 (직사광선 가능)</option>
-                        <option value="Balcony">베란다/발코니 (야외 유사 환경)</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>블라인드/커튼 유무:</label>
-                    <label><input type="checkbox" name="has_blinds_curtains" checked={formData.has_blinds_curtains} onChange={handleChange} /> 있음</label>
-                </div>
-
-                <div>
-                    <label htmlFor="water_frequency" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>물주기 빈도 선호:</label>
-                    <select id="water_frequency" name="water_frequency" value={formData.water_frequency} onChange={handleChange} style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}>
-                        <option value={1}>물을 자주 주는 편 (흙 마르면 바로)</option>
-                        <option value={2}>흙 표면 마르면 (주 1~2회)</option>
-                        <option value={3}>흙 속까지 완전히 마르면 (주 1회 미만)</option>
-                        <option value={4}>한 달 이상 간격</option>
-                    </select>
-                </div>
-
-                <button type="submit" disabled={loading} style={{ padding: '10px 20px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '5px', cursor: loading ? 'not-allowed' : 'pointer', fontSize: '16px', fontWeight: 'bold' }}>
-                    {loading ? '추천 중...' : '식물 추천받기'}
-                </button>
-            </form>
-
-            {error && (
-                <div style={{ color: 'red', marginTop: '20px', padding: '10px', border: '1px solid red', borderRadius: '5px', backgroundColor: '#ffe6e6' }}>
-                    <p>오류: {error}</p>
-                </div>
-            )}
-
-            {recommendations.length > 0 && (
-                <div style={{
-                    marginTop: '30px',
-                    padding: '20px',
-                    border: '1px solid #eee',
-                    borderRadius: '5px',
-                    backgroundColor: '#f9f9f9',
-                    textAlign: 'center'
-                }}>
-                    <h2 style={{ color: '#555', borderBottom: '1px solid #ddd', paddingBottom: '10px', marginBottom: '20px' }}>추천 식물</h2>
-                    <ul style={{ listStyle: 'none', padding: 0 }}>
-                        {recommendations.map((plant, index) => (
-                            <li key={index} style={{ marginBottom: '15px', padding: '10px', border: '1px solid #e0e0e0', borderRadius: '5px', backgroundColor: '#fff', display: 'flex', alignItems: 'flex-start', gap: '15px', justifyContent: 'center' }}>
-                                <img
-                                    src={plant.image_url}
-                                    alt={plant.name}
-                                    style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0, border: '1px solid #ccc' }}
-                                    onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/128x128/E0E6EB/555555?text=No+Image"; }}
-                                />
-                                <div>
-                                    <h3 style={{ color: '#4CAF50', marginTop: 0, marginBottom: '5px', textAlign: 'center' }}>{plant.name}</h3>
-                                    <p style={{ color: '#777', fontSize: '0.95em', lineHeight: '1.5', textAlign: 'center' }}>{plant.description}</p>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            )}
-
-            {!loading && !error && recommendations.length === 0 && (
-                <div style={{ marginTop: '30px', padding: '20px', border: '1px solid #eee', borderRadius: '5px', backgroundColor: '#f9f9f9', textAlign: 'center', color: '#888' }}>
-                    <p>아직 추천된 식물이 없습니다. 환경 정보를 입력하고 '식물 추천받기' 버튼을 눌러보세요!</p>
-                </div>
-            )}
-        </div>
+            </div>
+        </BrowserRouter>
     );
 }
 

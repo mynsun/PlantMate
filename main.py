@@ -195,7 +195,7 @@ async def recommend_plants(env_input: EnvironmentInput):
             ],
             tool_choice={"type": "function", "function": {"name": "recommend_plants"}},
             tools=tools,
-            temperature=0.3, 
+            temperature=0.7, 
             max_tokens=500
         )
         
