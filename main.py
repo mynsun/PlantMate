@@ -7,10 +7,14 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, Response
-from fastapi import HTTPException
 import requests
 from urllib.parse import unquote
 from io import BytesIO
+from datetime import datetime, timedelta
+from fastapi import Query
+import logging
+import pymysql
+import math
 
 from googleapiclient.discovery import build
 
@@ -24,11 +28,9 @@ app = FastAPI(
 origins = [
     "http://localhost",
     "http://localhost:3000", 
-    "http://localhost:3001", 
     "http://localhost:3002", 
     "http://15.168.150.125",     
     "http://15.168.150.125:3000", 
-    "http://15.168.150.125:3001"
     "http://15.168.150.125:3002",
 ]
 
@@ -40,18 +42,34 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+KAKAO_REST_API_KEY = os.getenv("KAKAO_REST_API_KEY")
+if not KAKAO_REST_API_KEY:
+    raise RuntimeError("KAKAO_REST_API_KEY가 .env에 설정되어 있지 않습니다.")
+
+OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
+if not OPENWEATHER_API_KEY:
+    raise RuntimeError("OPENWEATHER_API_KEY 환경 변수가 설정되지 않았습니다.")
+
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if not OPENAI_API_KEY:
     raise RuntimeError("OPENAI_API_KEY 환경 변수가 설정되지 않았습니다. .env 파일을 확인해 주세요.")
+
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 GOOGLE_CSE_ID = os.getenv("GOOGLE_CSE_ID")
-
 if not GOOGLE_API_KEY or not GOOGLE_CSE_ID:
     raise RuntimeError("GOOGLE_API_KEY 또는 GOOGLE_CSE_ID 환경 변수가 설정되지 않았습니다. .env 파일을 확인해 주세요.")
 
 google_search_service = build("customsearch", "v1", developerKey=GOOGLE_API_KEY)
+
+DB_CONFIG = {
+    "host": os.getenv("MYSQL_HOST"),
+    "user": os.getenv("MYSQL_USER"),
+    "password": os.getenv("MYSQL_PASSWORD"),
+    "database": os.getenv("MYSQL_DB"),
+    "cursorclass": pymysql.cursors.DictCursor,
+}
 
 class EnvironmentInput(BaseModel):
     has_south_sun: bool = False
@@ -134,6 +152,90 @@ async def search_plant_image(plant_name: str) -> Optional[str]:
     except Exception as e:
         print(f"Google Image Search 오류 ({plant_name}): {e}")
         return None
+
+def get_coords(address: str):
+    url = "https://dapi.kakao.com/v2/local/search/address.json"
+    headers = {"Authorization": f"KakaoAK {KAKAO_REST_API_KEY}"}
+    params = {"query": address}
+
+    try:
+        res = requests.get(url, headers=headers, params=params)
+        res.raise_for_status()
+        data = res.json()
+        if data["documents"]:
+            y = float(data["documents"][0]["y"])
+            x = float(data["documents"][0]["x"])
+            return y, x
+    except Exception as e:
+        print(f"[DEBUG] 주소 변환 실패: {e}")
+    return None, None
+
+def get_lat_lon_from_address(address: str):
+    headers = {"Authorization": f"KakaoAK {KAKAO_REST_API_KEY}"}
+    params = {"query": address}
+    url = "https://dapi.kakao.com/v2/local/search/address.json"
+    response = requests.get(url, headers=headers, params=params)
+    response.raise_for_status()
+    result = response.json()
+    if result["documents"]:
+        first = result["documents"][0]
+        return float(first["y"]), float(first["x"])
+    raise ValueError("주소로부터 위도/경도를 찾을 수 없습니다.")
+
+def get_weather_info(lat: float, lon: float):
+    url = (
+        f"https://api.openweathermap.org/data/2.5/weather?"
+        f"lat={lat}&lon={lon}&appid={OPENWEATHER_API_KEY}&units=metric&lang=kr"
+    )
+    response = requests.get(url)
+    response.raise_for_status()
+    data = response.json()
+    return {
+        "temperature": data["main"]["temp"],
+        "feels_like": data["main"]["feels_like"],
+        "humidity": data["main"]["humidity"],
+        "weather": data["weather"][0]["description"],
+        "wind": data["wind"]["speed"],
+        "rain": data.get("rain", {}).get("1h", 0),
+    }
+
+def get_user_plants_with_address(user_id: int):
+    conn = pymysql.connect(**DB_CONFIG)
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT address FROM users WHERE user_id = %s", (user_id,))
+            user = cursor.fetchone()
+            if not user or not user["address"]:
+                raise ValueError("해당 유저의 주소를 찾을 수 없습니다.")
+            address = user["address"]
+
+            cursor.execute("""
+                SELECT p.plant_name FROM user_plants up
+                JOIN plants p ON up.plant_id = p.plant_id
+                WHERE up.user_id = %s
+            """, (user_id,))
+            result = cursor.fetchall()
+            plant_names = [row["plant_name"] for row in result]
+
+            return address, plant_names
+    finally:
+        conn.close()
+
+def generate_care_advice(plant_name: str, weather_info: dict) -> str:
+    prompt = f"""
+    식물 '{plant_name}'의 오늘 날씨는 다음과 같습니다:
+    - 현재 기온: {weather_info['temperature']}°C
+    - 날씨 상태: {weather_info['weather']}
+
+    위 정보를 바탕으로, 식물을 오늘 날씨에 맞게 어떻게 관리해야 할지 한국어로 알려주세요.
+    """
+    response = openai_client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.7,
+    )
+    return response.choices[0].message.content
+
 
 @app.post("/recommend/", response_model=PlantRecommendationResponse)
 async def recommend_plants(env_input: EnvironmentInput):
@@ -270,3 +372,71 @@ async def proxy_image(url: str):
     except Exception as e:
         print(f"[Proxy Error] {e}")
         raise HTTPException(status_code=500, detail="이미지를 불러오는 데 실패했습니다.")
+
+
+@app.get("/weather")
+def get_weather(address: str = Query(...)):
+    try:
+        lat, lon = get_lat_lon_from_address(address)
+        print(f"[DEBUG] 변환된 위도: {lat}, 경도: {lon}")
+
+        url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={OPENWEATHER_API_KEY}&units=metric&lang=kr"
+        print("[DEBUG] 요청 URL:", url)
+
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+
+        rain_1h = data.get("rain", {}).get("1h", 0.0)
+        rain_3h = data.get("rain", {}).get("3h", 0.0)
+
+        weather = {
+            "위치": data.get("name", "알 수 없음"),
+            "날씨": data["weather"][0]["description"],
+            "기온(°C)": data["main"]["temp"],
+            "습도(%)": data["main"]["humidity"],
+            "바람속도(m/s)": data["wind"]["speed"],
+            "바람방향(°)": data["wind"]["deg"],
+            "구름량(%)": data["clouds"]["all"],
+            "강수량(mm, 1시간)": rain_1h,
+            "강수량(mm, 3시간)": rain_3h
+        }
+
+        return {
+            "address": address,
+            "lat": lat,
+            "lon": lon,
+            "url": url,
+            "weather": weather
+        }
+
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/plant-care-advice")
+async def get_plant_care_advice(user_id: int = Query(...)):
+    try:
+        address, plant_names = get_user_plants_with_address(user_id)
+
+        if not plant_names:
+            return {"message": "해당 사용자의 식물이 없습니다."}
+
+        lat, lon = get_lat_lon_from_address(address)
+        weather = get_weather_info(lat, lon)
+
+        advices = []
+        for plant in plant_names:
+            advice = generate_care_advice(plant, weather)
+            advices.append({"plant": plant, "advice": advice})
+
+        return {
+            "address": address,
+            "lat": lat,
+            "lon": lon,
+            "weather": weather,
+            "care_advice": advices,
+        }
+
+    except Exception as e:
+        return {"error": str(e)}

@@ -32,7 +32,7 @@ function App() {
         setError(null);
         setRecommendations([]);
 
-        const API_GATEWAY_URL = 'http://15.168.150.125:3001/recommend-plants';
+        const API_GATEWAY_URL = 'http://localhost:3000/recommend/';
 
         try {
             const response = await fetch(API_GATEWAY_URL, {

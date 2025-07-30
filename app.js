@@ -6,7 +6,7 @@ const axios = require('axios');
 const cors = require('cors');
 
 const app = express();
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3002;
 
 app.use(express.static(path.join(__dirname, 'frontend/build')));
 
@@ -20,10 +20,8 @@ if (!FASTAPI_SERVICE_URL) {
 app.use(cors({
     origin: [
         'http://localhost:3000',
-        'http://localhost:3001',
         'http://localhost:3002',
         'http://15.168.150.125:3000',
-        'http://15.168.150.125:3001',
         'http://15.168.150.125:3002',
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
