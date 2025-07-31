@@ -228,6 +228,7 @@ def generate_care_advice(plant_name: str, weather_info: dict) -> str:
     - 날씨 상태: {weather_info['weather']}
 
     위 정보를 바탕으로, 식물을 오늘 날씨에 맞게 어떻게 관리해야 할지 한국어로 알려주세요.
+    내용은 200자 이내로 알려주세요.
     """
     response = openai_client.chat.completions.create(
         model="gpt-4",
@@ -398,8 +399,7 @@ def get_weather(address: str = Query(...)):
             "바람속도(m/s)": data["wind"]["speed"],
             "바람방향(°)": data["wind"]["deg"],
             "구름량(%)": data["clouds"]["all"],
-            "강수량(mm, 1시간)": rain_1h,
-            "강수량(mm, 3시간)": rain_3h
+            "강수량(mm, 1시간)": weather["rain_1h"],
         }
 
         return {
@@ -414,7 +414,7 @@ def get_weather(address: str = Query(...)):
         return {"error": str(e)}
 
 
-@app.get("/plant-care-advice")
+@app.get("/plant-care")
 async def get_plant_care_advice(user_id: int = Query(...)):
     try:
         address, plant_names = get_user_plants_with_address(user_id)
@@ -423,18 +423,34 @@ async def get_plant_care_advice(user_id: int = Query(...)):
             return {"message": "해당 사용자의 식물이 없습니다."}
 
         lat, lon = get_lat_lon_from_address(address)
-        weather = get_weather_info(lat, lon)
+
+        url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={OPENWEATHER_API_KEY}&units=metric&lang=kr"
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+
+        rain_1h = data.get("rain", {}).get("1h", 0.0)
+        rain_3h = data.get("rain", {}).get("3h", 0.0)
+
+        weather_info = {
+            "기온(°C)": data["main"]["temp"],
+            "습도(%)": data["main"]["humidity"],
+            "바람속도(m/s)": data["wind"]["speed"],
+            "날씨": data["weather"][0]["description"],
+            "강수량(mm, 1시간)": rain_1h,
+        }
 
         advices = []
         for plant in plant_names:
-            advice = generate_care_advice(plant, weather)
+            advice = generate_care_advice(plant, {
+                "temperature": data["main"]["temp"],
+                "weather": data["weather"][0]["description"]
+            })
             advices.append({"plant": plant, "advice": advice})
 
         return {
             "address": address,
-            "lat": lat,
-            "lon": lon,
-            "weather": weather,
+            "weather": weather_info,
             "care_advice": advices,
         }
 
