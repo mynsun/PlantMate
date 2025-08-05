@@ -58,7 +58,7 @@ const Header = () => {
                         </button>
                     ) : (
                         <>
-                            <Link to="/login" className="btn btn-outline">
+                            <Link to="http://15.168.150.125:5000/login" className="btn btn-outline">
                                 로그인
                             </Link>
                             <Link to="/register" className="btn btn-primary">

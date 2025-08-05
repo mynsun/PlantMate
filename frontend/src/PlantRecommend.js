@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Header from './Header';
+import { motion } from 'framer-motion';
 
 function PlantRecommend() {
     const [formData, setFormData] = useState({
@@ -52,94 +53,322 @@ function PlantRecommend() {
     };
 
     return (
-        <div style={{ paddingTop: '30px', backgroundColor: '#d8e3e2', minHeight: '100vh' }}>
+        <div style={{ paddingTop: '30px', backgroundColor: '#eaf4f4', minHeight: '100vh' }}>
             <Header />
 
-            <div style={{ maxWidth: '1000px', margin: '80px auto 20px', padding: '20px', border: '1px solid #D8E3E2', borderRadius: '8px', backgroundColor: '#D8E3E2' }}>
-                <header style={{ textAlign: 'center', marginBottom: '30px' }}>
-                    <h2 style={{ color: '#333' }}>식물 추천 받기</h2>
-                    <h3 style={{ color: '#666' }}>당신의 환경에 딱 맞는 식물을 찾아보세요!</h3>
+            <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                style={{
+                    maxWidth: '1000px',
+                    margin: '100px auto 20px',
+                    padding: '20px',
+                    borderRadius: '16px',
+                    backgroundColor: '#EFF7F8',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)'
+                }}
+            >
+                <header style={{ textAlign: 'center', marginBottom: '40px', paddingTop: '30px' }}>
+                    {/* <h2 style={{ color: '#2c3e50', fontSize: '28px' }}>식물 추천 받기</h2> */}
+                    <h2 style={{ color: '#7f8c8d', fontSize: '30px' }}>환경에 딱 맞는 식물을 찾아보세요!</h2>
                 </header>
 
-                <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '15px', padding: '20px', border: '1px solid #eee', borderRadius: '5px', backgroundColor: '#f9f9f9' }}>
-                    <h2 style={{ color: '#555', borderBottom: '1px solid #ddd', paddingBottom: '10px', marginBottom: '20px', textAlign: 'center' }}>환경 정보 입력</h2>
+                <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '20px', justifyContent: 'center' }}>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '24px',
+                        marginBottom: '12px',
+                        width: '100%',
+                        maxWidth: '600px',
+                        marginInline: 'auto'
+                    }}>
+                        <span style={{
+                            fontWeight: 'bold',
+                            width: '120px',
+                            textAlign: 'left',
+                            flexShrink: 0,
+                            whiteSpace: 'nowrap'
+                        }}>
+                            햇빛 방향(중복 가능)
+                        </span>
 
-                    <div style={{ textAlign: 'center' }}>
-                        <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>햇빛 방향:</label>
-                        <div style={{ display: 'inline-flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                            <label><input type="checkbox" name="has_south_sun" checked={formData.has_south_sun} onChange={handleChange} /> 남향</label>
-                            <label><input type="checkbox" name="has_north_sun" checked={formData.has_north_sun} onChange={handleChange} /> 북향</label>
-                            <label><input type="checkbox" name="has_east_sun" checked={formData.has_east_sun} onChange={handleChange} /> 동향</label>
-                            <label><input type="checkbox" name="has_west_sun" checked={formData.has_west_sun} onChange={handleChange} /> 서향</label>
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'flex-start',
+                            flexWrap: 'wrap',
+                            gap: '10px',
+                            flex: 1
+                        }}>
+                            {[
+                                { key: 'south', label: '남향' },
+                                { key: 'north', label: '북향' },
+                                { key: 'east', label: '동향' },
+                                { key: 'west', label: '서향' }
+                            ].map(({ key, label }) => {
+                                const field = `has_${key}_sun`;
+                                const selected = formData[field];
+
+                                return (
+                                    <button
+                                        key={key}
+                                        type="button"
+                                        onClick={() =>
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                [field]: !prev[field]
+                                            }))
+                                        }
+                                        style={{
+                                            padding: '8px 18px',
+                                            borderRadius: '24px',
+                                            border: selected ? '2px solid #5e865f' : '1px solid #5e865f',
+                                            backgroundColor: selected ? '#5e865f' : '#fff',
+                                            color: selected ? '#fff' : '#5e865f',
+                                            fontWeight: 'bold',
+                                            cursor: 'pointer',
+                                            whiteSpace: 'nowrap',
+                                            minWidth: '70px'
+                                        }}
+                                    >
+                                        {label}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 
-                    <div style={{ textAlign: 'center' }}>
-                        <label htmlFor="plant_location" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>식물 놓을 위치:</label>
-                        <select id="plant_location" name="plant_location" value={formData.plant_location} onChange={handleChange} style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}>
-                            <option value="Indoor">창가에서 1m 이상 떨어진 실내</option>
-                            <option value="Window">창가 바로 옆 (직사광선 가능)</option>
-                            <option value="Balcony">베란다/발코니 (야외 유사 환경)</option>
-                        </select>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '24px',
+                        marginBottom: '12px',
+                        width: '100%',
+                        maxWidth: '600px',
+                        marginInline: 'auto'
+                    }}>
+                        <span style={{
+                            fontWeight: 'bold',
+                            width: '120px',
+                            textAlign: 'left',
+                            flexShrink: 0,
+                            whiteSpace: 'nowrap'
+                        }}>
+                            블라인드
+                        </span>
+
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'flex-start',
+                            flexWrap: 'wrap',
+                            gap: '10px',
+                            flex: 1
+                        }}>
+                            {[
+                                { value: true, label: '있음' },
+                                { value: false, label: '없음' }
+                            ].map(({ value, label }) => {
+                                const selected = formData.has_blinds_curtains === value;
+
+                                return (
+                                    <button
+                                        key={value.toString()}
+                                        type="button"
+                                        onClick={() =>
+                                            setFormData(prev => ({ ...prev, has_blinds_curtains: value }))
+                                        }
+                                        style={{
+                                            padding: '8px 15px',
+                                            borderRadius: '24px',
+                                            border: selected ? '2px solid #5e865f' : '1px solid #5e865f',
+                                            backgroundColor: selected ? '#5e865f' : '#fff',
+                                            color: selected ? '#fff' : '#5e865f',
+                                            fontWeight: 'bold',
+                                            cursor: 'pointer',
+                                            whiteSpace: 'nowrap',
+                                            minWidth: '70px'
+                                        }}
+                                    >
+                                        {label}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
 
-                    <div style={{ textAlign: 'center' }}>
-                        <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>블라인드/커튼 유무:</label>
-                        <label><input type="checkbox" name="has_blinds_curtains" checked={formData.has_blinds_curtains} onChange={handleChange} /> 있음</label>
-                    </div>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '24px',
+                        marginBottom: '12px',
+                        width: '100%',
+                        maxWidth: '600px',
+                        marginInline: 'auto'
+                    }}>
+                        <span style={{
+                            fontWeight: 'bold',
+                            width: '120px',
+                            textAlign: 'left',
+                            flexShrink: 0,
+                            whiteSpace: 'nowrap'
+                        }}>
+                            식물 위치
+                        </span>
 
-                    <div style={{ textAlign: 'center' }}>
-                        <label htmlFor="water_frequency" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>물주기 빈도 선호:</label>
-                        <select id="water_frequency" name="water_frequency" value={formData.water_frequency} onChange={handleChange} style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}>
-                            <option value={1}>물을 자주 주는 편 (흙 마르면 바로)</option>
-                            <option value={2}>흙 표면 마르면 (주 1~2회)</option>
-                            <option value={3}>흙 속까지 완전히 마르면 (주 1회 미만)</option>
-                        </select>
-                    </div>
-
-                    <button type="submit" disabled={loading} style={{ padding: '10px 20px', backgroundColor: '#5e865f', color: 'white', border: 'none', borderRadius: '5px', cursor: loading ? 'not-allowed' : 'pointer', fontSize: '16px', fontWeight: 'bold' }}>
-                        {loading ? '추천 중...' : '식물 추천받기'}
-                    </button>
-                </form>
-
-                {error && (
-                    <div style={{ color: 'red', marginTop: '20px', padding: '10px', border: '1px solid red', borderRadius: '5px', backgroundColor: '#ffe6e6' }}>
-                        <p>오류: {error}</p>
-                    </div>
-                )}
-
-                {recommendations.length > 0 && (
-                    <div style={{ marginTop: '30px', padding: '20px', border: '1px solid #eee', borderRadius: '5px', backgroundColor: '#f9f9f9' }}>
-                        <h2 style={{ color: '#555', borderBottom: '1px solid #ddd', paddingBottom: '10px', marginBottom: '20px', textAlign: 'center' }}>추천 식물</h2>
-                        <ul style={{ listStyle: 'none', padding: 0 }}>
-                            {recommendations.map((plant, index) => (
-                                <li key={index} style={{ marginBottom: '20px', padding: '10px', border: '1px solid #e0e0e0', borderRadius: '5px', backgroundColor: '#fff', display: 'flex', alignItems: 'flex-start', gap: '15px' }}>
-                                    <img
-                                        src={plant.image_url}
-                                        alt={plant.name}
-                                        style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0, border: '1px solid #ccc' }}
-                                        onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/128x128/E0E6EB/555555?text=No+Image"; }}
-                                    />
-                                    <div style={{
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        flex: 1
-                                    }}>
-                                        <h3 style={{ color: '#4CAF50', marginTop: 0, marginBottom: '5px', textAlign: 'center' }}>{plant.name}</h3>
-                                        <p style={{ color: '#777', fontSize: '0.95em', lineHeight: '1.5', textAlign: 'center' }}>{plant.description}</p>
-                                    </div>
-                                </li>
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'flex-start',
+                            flexWrap: 'wrap',
+                            gap: '10px',
+                            flex: 1
+                        }}>
+                            {[
+                                { value: 'Indoor', label: '실내' },
+                                { value: 'Window', label: '창가' },
+                                { value: 'Balcony', label: '베란다' }
+                            ].map(({ value, label }) => (
+                                <button
+                                    key={value}
+                                    type="button"
+                                    onClick={() => setFormData(prev => ({ ...prev, plant_location: value }))}
+                                    style={{
+                                        padding: '8px 15px',
+                                        borderRadius: '24px',
+                                        border: formData.plant_location === value ? '2px solid #5e865f' : '1px solid #5e865f',
+                                        backgroundColor: formData.plant_location === value ? '#5e865f' : '#fff',
+                                        color: formData.plant_location === value ? '#fff' : '#5e865f',
+                                        fontWeight: 'bold',
+                                        cursor: 'pointer',
+                                        whiteSpace: 'nowrap',
+                                        minWidth: '70px'
+                                    }}
+                                >
+                                    {label}
+                                </button>
                             ))}
-                        </ul>
+                        </div>
                     </div>
-                )}
 
-                {!loading && !error && recommendations.length === 0 && (
-                    <div style={{ marginTop: '30px', padding: '20px', border: '1px solid #eee', borderRadius: '5px', backgroundColor: '#f9f9f9', textAlign: 'center', color: '#888' }}>
-                        <p>아직 추천된 식물이 없습니다. 환경 정보를 입력하고 '식물 추천받기' 버튼을 눌러보세요!</p>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '24px',
+                        marginBottom: '12px',
+                        width: '100%',
+                        maxWidth: '600px',
+                        marginInline: 'auto'
+                    }}>
+                        <span style={{
+                            fontWeight: 'bold',
+                            width: '120px',
+                            textAlign: 'left',
+                            flexShrink: 0,
+                            whiteSpace: 'nowrap'
+                        }}>
+                            물주기 빈도
+                        </span>
+
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'flex-start',
+                            flexWrap: 'wrap',
+                            gap: '10px',
+                            flex: 1
+                        }}>
+                            {[
+                                { value: 1, label: '자주' },
+                                { value: 2, label: '주 1~2회' },
+                                { value: 3, label: '주 1회 미만' }
+                            ].map(({ value, label }) => (
+                                <button
+                                    key={value}
+                                    type="button"
+                                    onClick={() => setFormData(prev => ({ ...prev, water_frequency: value }))}
+                                    style={{
+                                        padding: '8px 15px',
+                                        borderRadius: '24px',
+                                        border: formData.water_frequency === value ? '2px solid #5e865f' : '1px solid #5e865f',
+                                        backgroundColor: formData.water_frequency === value ? '#5e865f' : '#fff',
+                                        color: formData.water_frequency === value ? '#fff' : '#5e865f',
+                                        fontWeight: 'bold',
+                                        cursor: 'pointer',
+                                        whiteSpace: 'nowrap',
+                                        minWidth: '70px'
+                                    }}
+                                >
+                                    {label}
+                                </button>
+                            ))}
+                        </div>
                     </div>
-                )}
+
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        type="submit"
+                        disabled={loading}
+                        style={{
+                            padding: '16px 42px',
+                            backgroundColor: '#5e865f',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '24px',
+                            fontSize: '18px',
+                            fontWeight: 'bold',
+                            cursor: loading ? 'not-allowed' : 'pointer'
+                        }}
+                    >
+                        {loading ? '추천 중...' : '식물 추천받기'}
+                    </motion.button>
+                </form>
+            </motion.div>
+
+            {error && (
+                <div style={{ color: 'red', marginTop: '20px' }}>{error}</div>
+            )}
+
+            <div style={{
+                marginTop: '40px',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                gap: '32px',
+                justifyContent: 'center',
+                maxWidth: '1000px',
+                marginLeft: 'auto',
+                marginRight: 'auto',
+                paddingBottom: '30px'
+            }}>
+                {recommendations.map((plant, index) => (
+                    <motion.div
+                        key={index}
+                        style={{
+                            backgroundColor: '#EFF7F8',
+                            borderRadius: '16px',
+                            boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+                            overflow: 'hidden',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            textAlign: 'center',
+                            padding: '32px',
+                            minHeight: '420px'
+                        }}
+                    >
+                        <img
+                            src={plant.image_url}
+                            alt={plant.name}
+                            style={{
+                                width: '100%',
+                                height: '260px',
+                                objectFit: 'cover',
+                                borderRadius: '8px'
+                            }}
+                        />
+                        <h4 style={{ margin: '16px 0 8px', fontSize: '20px' }}>{plant.name}</h4>
+                        <p style={{ fontSize: '15px', color: '#555' }}>{plant.description}</p>
+                    </motion.div>
+                ))}
             </div>
         </div>
     );

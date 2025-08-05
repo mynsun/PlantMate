@@ -15,10 +15,15 @@ from fastapi import Query
 import logging
 import pymysql
 import math
-
+from fastapi import Depends
+from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
 from googleapiclient.discovery import build
 
 load_dotenv()
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")  # 토큰 엔드포인트 경로
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")  # .env에 설정해둔 비밀키 사용
 
 app = FastAPI(
     title="식물 추천 서비스",
@@ -32,6 +37,7 @@ origins = [
     "http://15.168.150.125",     
     "http://15.168.150.125:3000", 
     "http://15.168.150.125:3002",
+    "https://plantmate.site"
 ]
 
 app.add_middleware(
@@ -88,6 +94,14 @@ class RecommendedPlant(BaseModel):
 class PlantRecommendationResponse(BaseModel):
     recommendations: List[RecommendedPlant]
 
+def get_current_user_id(token: str = Depends(oauth2_scheme)) -> int:
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        user_id = int(payload.get("sub"))
+        return user_id
+    except (JWTError, ValueError):
+        raise HTTPException(status_code=401, detail="유효하지 않은 토큰입니다.")
+
 def get_env_description(
     has_south_sun: bool,
     has_north_sun: bool,
@@ -134,7 +148,7 @@ def get_env_description(
 
 async def search_plant_image(plant_name: str) -> Optional[str]:
     """
-    Google Custom Search API를 사용하여 식물 이미지를 검색하고 첫 번째 이미지 URL을 반환합니다.
+    Google Custom Search API를 사용하여 식물 이미지를 검색하고 첫 번째 이미지 URL을 반환합니다. 글자가 있는 사진은 제외해주세요.
     """
     try:
         res = google_search_service.cse().list(
@@ -286,7 +300,7 @@ async def recommend_plants(env_input: EnvironmentInput):
 
     이러한 환경 조건에 가장 적합하도록 한국에서 키우기 쉬운 실내 식물 3가지를 다양하게 추천해주세요.
     각 식물에 대해 이름과 자세한 설명을 포함해야 합니다.
-    설명은 100자 이내로 자세하게 작성해주세요.
+    설명은 200자 이내로 자세하게 작성해주세요.
     """
 
     try:
@@ -415,7 +429,7 @@ def get_weather(address: str = Query(...)):
 
 
 @app.get("/plant-care")
-async def get_plant_care_advice(user_id: int = Query(...)):
+async def get_plant_care_advice(user_id: int = Depends(get_current_user_id)):
     try:
         address, plant_names = get_user_plants_with_address(user_id)
 
@@ -442,7 +456,7 @@ async def get_plant_care_advice(user_id: int = Query(...)):
 
         advices = []
         for plant in plant_names:
-            advice = generate_care_advice(plant, {
+            advice = await generate_care_advice(plant, {
                 "temperature": data["main"]["temp"],
                 "weather": data["weather"][0]["description"]
             })
@@ -455,4 +469,5 @@ async def get_plant_care_advice(user_id: int = Query(...)):
         }
 
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=f"서버 오류: {str(e)}")
+
