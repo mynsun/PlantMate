@@ -25,30 +25,20 @@ const Header = () => {
             />
             <title>PlantMate</title>
             <header className="app-header">
-                <Link
-                    to="/"
-                    className="logo"
-                    style={{ textDecoration: "none", color: "inherit" }}
-                >
+                <a href="https://plantmate.site" className="logo" style={{ textDecoration: "none", color: "inherit" }}>
                     <div className="logo">
                         <i className="fas fa-leaf"></i>
                         <span>PlantMate</span>
                     </div>
-                </Link>
+                </a>
 
                 <nav className="main-nav">
-                    <a href="/" className="nav-link active">
-                        홈
-                    </a>
-                    <a href="#" className="nav-link">
-                        식물 관리
-                    </a>
-                    <a href="#" className="nav-link">
-                        기능 소개
-                    </a>
-                    <a href="#" className="nav-link">
-                        문의하기
-                    </a>
+                    <a href="https://plantmate.site" className="nav-link active">홈</a>
+                    <a href="https://plantmate.site/plantsearch" className="nav-link">식물 식별</a>
+                    <Link to="/recommend" className="nav-link">식물 추천</Link>
+                    <Link to="/care" className="nav-link">성장 가이드</Link>
+                    <a href="https://plantmate.site/plantgrowthtracker" className="nav-link">성장 레포트</a>
+                    <a href="https://plantmate.site/garden" className="nav-link">정원 꾸미기</a>
                 </nav>
 
                 <div className="auth-buttons">
@@ -58,12 +48,8 @@ const Header = () => {
                         </button>
                     ) : (
                         <>
-                            <Link to="http://15.168.150.125:5000/login" className="btn btn-outline">
-                                로그인
-                            </Link>
-                            <Link to="/register" className="btn btn-primary">
-                                회원가입
-                            </Link>
+                            <a href="https://plantmate.site/login" className="btn btn-outline">로그인</a>
+                            <a href="https://plantmate.site/register" className="btn btn-primary">회원가입</a>
                         </>
                     )}
                 </div>
